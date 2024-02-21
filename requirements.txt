@@ -1,5 +1,5 @@
---extra-index-url https://download.pytorch.org/whl/cu122
-torch==2.0.0+cu122
+--extra-index-url https://download.pytorch.org/whl/cu117
+torch==2.0.0+cu117
 packaging
 fairscale
 sentencepiece
