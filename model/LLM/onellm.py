@@ -78,10 +78,10 @@ class Attention(nn.Module):
         self.n_local_heads = args.n_heads #fs_init.get_model_parallel_world_size()
         self.head_dim = args.dim // args.n_heads
 
-        self.wq = nn.Linear(args.dim, args.dim)
-        self.wk = nn.Linear(args.dim, args.dim)
-        self.wv = nn.Linear(args.dim, args.dim)
-        self.wo = nn.Linear(args.dim, args.dim)
+        self.wq = nn.Linear(args.dim, args.dim, bias=True)
+        self.wk = nn.Linear(args.dim, args.dim, bias=True)
+        self.wv = nn.Linear(args.dim, args.dim, bias=True)
+        self.wo = nn.Linear(args.dim, args.dim, bias=True)
         #
         # self.wq = ColumnParallelLinear(
         #     args.dim,
@@ -248,7 +248,7 @@ class Transformer(nn.Module):
 
         self.norm = RMSNorm(params.dim, eps=params.norm_eps)
         self.output = nn.Linear(
-            params.dim, params.vocab_size, bias=False)
+            params.dim, params.vocab_size, bias=True)
 
         self.freqs_cis = precompute_freqs_cis(
             self.params.dim // self.params.n_heads, self.params.max_seq_len * 2
