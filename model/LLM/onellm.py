@@ -17,6 +17,7 @@ from fairscale.nn.model_parallel.layers import (
     RowParallelLinear,
     ColumnParallelLinear,
 )
+from torch.nn import Embedding
 from ..components import RMSNorm
 from flash_attn import flash_attn_func
 
@@ -229,9 +230,8 @@ class Transformer(nn.Module):
         self.params = params
         self.vocab_size = params.vocab_size
         self.n_layers = params.n_layers
-        self.tok_embeddings = ParallelEmbedding(
-            params.vocab_size, params.dim, init_method=nn.init.normal_,
-        )
+        self.tok_embeddings = Embedding(
+            params.vocab_size, params.dim, max_norm=True,)
 
         self.layers = torch.nn.ModuleList()
         for layer_id in range(params.n_layers):
@@ -239,7 +239,7 @@ class Transformer(nn.Module):
 
         self.norm = RMSNorm(params.dim, eps=params.norm_eps)
         self.output = ColumnParallelLinear(
-            params.dim, params.vocab_size, bias=False, init_method=default_linear_init,
+            params.dim, params.vocab_size, bias=False, init_method=default_linear_init,gather_output=False
         )
 
         self.freqs_cis = precompute_freqs_cis(

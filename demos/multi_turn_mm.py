@@ -59,8 +59,7 @@ def model_worker(
     gpu_id = args.gpu_ids[rank]
     dist.init_process_group(
         backend="nccl", rank=rank, world_size=world_size,
-        init_method=f"tcp://{args.master_addr}:{args.master_port}",
-    )
+        init_method=f"tcp://{args.master_addr}:{args.master_port}",)
     print(f"| distributed init on worker {rank}/{world_size}. "
           f"using gpu: {gpu_id}")
     fs_init.initialize_model_parallel(world_size)
