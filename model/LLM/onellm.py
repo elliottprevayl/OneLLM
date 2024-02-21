@@ -301,7 +301,7 @@ class Transformer(nn.Module):
                     torch.empty([modal_tokens, clip_width]))
                 nn.init.normal_(self.positional_embedding[modal], std=0.02)
             elif modal == 'point':
-                from model.lib.point_utils import PointPatchEmbed
+                from OneLLM.model.lib.point_utils import PointPatchEmbed
                 self.conv1[modal] = PointPatchEmbed(
                     in_channels=6, channels=clip_width)
                 modal_tokens = 1024 + 1
