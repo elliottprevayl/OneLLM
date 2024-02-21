@@ -78,9 +78,10 @@ class Attention(nn.Module):
         self.n_local_heads = args.n_heads #fs_init.get_model_parallel_world_size()
         self.head_dim = args.dim // args.n_heads
 
-        self.wq = nn.Linear(args.dim,args.dim)
-        self.wk = nn.Linear(args.dim,args.dim)
-        self.wv = nn.Linear(args.dim,args.dim)
+        self.wq = nn.Linear(args.dim, args.dim)
+        self.wk = nn.Linear(args.dim, args.dim)
+        self.wv = nn.Linear(args.dim, args.dim)
+        self.wo = nn.Linear(args.dim, args.dim)
         #
         # self.wq = ColumnParallelLinear(
         #     args.dim,
@@ -103,14 +104,13 @@ class Attention(nn.Module):
         #     gather_output=False,
         #     init_method=default_linear_init,
         # )
-        self.wo = RowParallelLinear(
-            args.n_heads * self.head_dim,
-            args.dim,
-            bias=False,
-            input_is_parallel=False,
-            init_method=default_linear_init,
-        )
-
+        # self.wo = RowParallelLinear(
+        #     args.n_heads * self.head_dim,
+        #     args.dim,
+        #     bias=False,
+        #     input_is_parallel=False,
+        #     init_method=default_linear_init,
+        # )
         self.flash = True
         self.k_cache, self.v_cache = None, None
 
@@ -165,15 +165,20 @@ class FeedForward(nn.Module):
         hidden_dim = multiple_of * \
             ((hidden_dim + multiple_of - 1) // multiple_of)
 
-        self.w1 = ColumnParallelLinear(
-            dim, hidden_dim, bias=False, gather_output=False, init_method=default_linear_init,
-        )
-        self.w2 = RowParallelLinear(
-            hidden_dim, dim, bias=False, input_is_parallel=False, init_method=default_linear_init
-        )
-        self.w3 = ColumnParallelLinear(
-            dim, hidden_dim, bias=False, gather_output=False, init_method=default_linear_init
-        )
+        self.w1 = nn.Linear(dim,hidden_dim, bias=False)
+        self.w2 = nn.Linear(dim,hidden_dim, bias=False)
+        self.w3 = nn.Linear(dim,hidden_dim, bias=False)
+
+        #
+        # self.w1 = ColumnParallelLinear(
+        #     dim, hidden_dim, bias=False, gather_output=False, init_method=default_linear_init,
+        # )
+        # self.w2 = RowParallelLinear(
+        #     hidden_dim, dim, bias=False, input_is_parallel=False, init_method=default_linear_init
+        # )
+        # self.w3 = ColumnParallelLinear(
+        #     dim, hidden_dim, bias=False, gather_output=False, init_method=default_linear_init
+        # )
 
     def _silu_gating(self, x, y):
         return F.silu(x) * y
