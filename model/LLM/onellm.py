@@ -78,32 +78,36 @@ class Attention(nn.Module):
         self.n_local_heads = args.n_heads #fs_init.get_model_parallel_world_size()
         self.head_dim = args.dim // args.n_heads
 
-        self.wq = ColumnParallelLinear(
-            args.dim,
-            args.n_heads * self.head_dim,
-            bias=False,
-            gather_output=False,
-            init_method=default_linear_init,
-        )
-        self.wk = ColumnParallelLinear(
-            args.dim,
-            args.n_heads * self.head_dim,
-            bias=False,
-            gather_output=False,
-            init_method=default_linear_init,
-        )
-        self.wv = ColumnParallelLinear(
-            args.dim,
-            args.n_heads * self.head_dim,
-            bias=False,
-            gather_output=False,
-            init_method=default_linear_init,
-        )
+        self.wq = nn.Linear(args.dim,args.dim)
+        self.wk = nn.Linear(args.dim,args.dim)
+        self.wv = nn.Linear(args.dim,args.dim)
+        #
+        # self.wq = ColumnParallelLinear(
+        #     args.dim,
+        #     args.n_heads * self.head_dim,
+        #     bias=False,
+        #     gather_output=False,
+        #     init_method=default_linear_init,
+        # )
+        # self.wk = ColumnParallelLinear(
+        #     args.dim,
+        #     args.n_heads * self.head_dim,
+        #     bias=False,
+        #     gather_output=False,
+        #     init_method=default_linear_init,
+        # )
+        # self.wv = ColumnParallelLinear(
+        #     args.dim,
+        #     args.n_heads * self.head_dim,
+        #     bias=False,
+        #     gather_output=False,
+        #     init_method=default_linear_init,
+        # )
         self.wo = RowParallelLinear(
             args.n_heads * self.head_dim,
             args.dim,
             bias=False,
-            input_is_parallel=True,
+            input_is_parallel=False,
             init_method=default_linear_init,
         )
 
@@ -165,7 +169,7 @@ class FeedForward(nn.Module):
             dim, hidden_dim, bias=False, gather_output=False, init_method=default_linear_init,
         )
         self.w2 = RowParallelLinear(
-            hidden_dim, dim, bias=False, input_is_parallel=True, init_method=default_linear_init
+            hidden_dim, dim, bias=False, input_is_parallel=False, init_method=default_linear_init
         )
         self.w3 = ColumnParallelLinear(
             dim, hidden_dim, bias=False, gather_output=False, init_method=default_linear_init
@@ -238,9 +242,8 @@ class Transformer(nn.Module):
             self.layers.append(TransformerBlock(layer_id, params))
 
         self.norm = RMSNorm(params.dim, eps=params.norm_eps)
-        self.output = ColumnParallelLinear(
-            params.dim, params.vocab_size, bias=False, init_method=default_linear_init,gather_output=False
-        )
+        self.output = nn.Linear(
+            params.dim, params.vocab_size, bias=False)
 
         self.freqs_cis = precompute_freqs_cis(
             self.params.dim // self.params.n_heads, self.params.max_seq_len * 2
