@@ -19,7 +19,7 @@ from fairscale.nn.model_parallel.layers import (
 )
 from torch.nn import Embedding
 from ..components import RMSNorm
-from flash_attn import flash_attn_func
+# from flash_attn import flash_attn_func
 
 import open_clip
 
@@ -134,12 +134,21 @@ class Attention(nn.Module):
             self.v_cache[:bsz, start_pos: start_pos + seqlen, :, :] = xv
             keys = self.k_cache[:bsz, :start_pos + seqlen]
             values = self.v_cache[:bsz, :start_pos + seqlen]
+        # scoring the query vectors against all key vectors
+        scores = xq @ keys.transpose()
+        from scipy.special import softmax
 
-        output = flash_attn_func(
-            xq, keys, values, dropout_p=0.0, causal=mask is not None)
-        output = output.contiguous().view(bsz, seqlen, -1)
+        # computing the weights by a softmax operation
+        weights = softmax(scores / keys.shape[1] ** 0.5, axis=1)
 
-        return self.wo(output)
+        # computing the attention by a weighted sum of the value vectors
+        return weights @ values
+
+        # output = flash_attn_func(
+        #     xq, keys, values, dropout_p=0.0, causal=mask is not None)
+        # output = output.contiguous().view(bsz, seqlen, -1)
+        #
+        # return self.wo(output)
 
     def allocate_kv_cache(self, max_batch_size: int, max_seq_len: int) -> None:
         kv_cache_shape = (max_batch_size, max_seq_len,
