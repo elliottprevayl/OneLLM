@@ -300,14 +300,17 @@ class Transformer(nn.Module):
                 self.positional_embedding[modal] = nn.Parameter(
                     torch.empty([modal_tokens, clip_width]))
                 nn.init.normal_(self.positional_embedding[modal], std=0.02)
-            # elif modal == 'point':
+            elif modal == 'point':
             #     from OneLLM.model.lib.point_utils import PointPatchEmbed
+                self.conv1[modal] = nn.Conv1d(
+                    in_channels=6, out_channels=clip_width, kernel_size=10, bias=False)
             #     self.conv1[modal] = PointPatchEmbed(
             #         in_channels=6, channels=clip_width)
-            #     modal_tokens = 1024 + 1
-            #     self.positional_embedding[modal] = nn.Parameter(
-            #         torch.empty([modal_tokens, clip_width]))
-            #     nn.init.normal_(self.positional_embedding[modal], std=0.02)
+
+                modal_tokens = 1024 + 1
+                self.positional_embedding[modal] = nn.Parameter(
+                    torch.empty([modal_tokens, clip_width]))
+                nn.init.normal_(self.positional_embedding[modal], std=0.02)
             elif modal == 'fmri':
                 self.conv1[modal] = nn.Linear(15724, 8192)
                 self.positional_embedding[modal] = nn.Parameter(
